@@ -1,0 +1,113 @@
+% Simulasi caching dengan satu produsen
+C = 4;
+jcontent = 16; % banyaknya konten
+CS = 3; % size of cache store
+Jumlah_router = 5; % jumlah router
+LRUmin = 10;
+LRUmax = 20;
+
+% array untuk menyimpan ID dari produsen paket yang di-cache
+Router1 = linspace(0,0,CS); 
+Router2 = linspace(0,0,CS); 
+Router3 = linspace(0,0,CS); 
+Router4 = linspace(0,0,CS); 
+Router5 = linspace(0,0,CS); 
+
+CS_LRU = linspace(0,0,CS); % array untuk menyimpan paket yang sudah di LRU cache
+cache_hit = 0;
+cache_miss = 0;
+x = (1:7);
+y = (8:16);% konten awalan biner 1 dari 4 biner
+i = 50; % jumlah pengulangan 
+
+% simulasi permintaan
+for t = 1:i;
+    ranks=1:1:jcontent;
+    pmf = (ranks.^(-0.7))/sum(ranks.^(-0.7));
+        samples1 = rand(1,1);
+        p = cumsum(pmf(:));
+        [~,x1] = histc(samples1,[0;p/p(end)]);
+        prod=x1; % random consumer dan distribusi uniform
+        
+    konten = prod;
+    cons = randi(C); % random produser dan terdistribusi uniform
+    CLRU = randi([LRUmin, LRUmax]); % LRU 
+    x = (1:7);
+    y = (8:16);% konten awalan biner 1
+    
+    
+    if (Router1:Router5 == konten);
+         cache_hit = cache_hit + 1; % cache hit nya +1
+    else
+        cache_miss = cache_miss + 1;
+    end
+    
+%  untuk memeriksa apakah konten dari konsumen yang dipilih ada dalam router
+   index = find(Router1:Router5 == konten); 
+     
+% Jika ada maka        
+     if not(isempty(index)) 
+        if konten <=7;
+               Router2(index(1)) = konten;
+               Router4(index(1)) = konten;
+            elseif konten>=8 && konten<=16;
+                 Router1(index(1)) = konten;
+                 Router3(index(1)) = konten;
+                 Router5(index(1)) = konten; 
+        end        
+       
+        if CS_LRU(index) <= CLRU
+            cache_hit = cache_hit + 1; % cache hit nya +1
+        else % jika paketnya sudah lama
+            cache_miss = cache_miss + 1; % cache missnya +1 dan ambil data baru dari produsen
+            CS_LRU(index) = 0;
+        end
+    else
+        cache_miss = cache_miss + 1; % cache miss ini ambil dari produser
+        index = find((Router1:Router5) == 0); % untuk ngecek kalau ada ruang yang kosong
+  
+        if not(isempty(index)) % kalau ruang cache kosong
+            if konten <=7;
+               Router2(index(1)) = konten;
+               Router4(index(1)) = konten;
+            elseif konten>=8 && konten<=16;
+                 Router1(index(1)) = konten;
+                 Router3(index(1)) = konten;
+                 Router5(index(1)) = konten; 
+            end 
+            CS_LRU(index(1)) = 0;
+         
+        else
+        index = find(CS_LRU == max(CS_LRU));% cari data konten paling lama
+               if konten <=7;
+               Router2(index(1)) = konten;
+               Router4(index(1)) = konten;
+               elseif konten>=8 && konten<=16;
+                 Router1(index(1)) = konten;
+                 Router3(index(1)) = konten;
+                 Router5(index(1)) = konten; 
+               end  
+            CS_LRU(index(1)) = 0;
+                    
+        end
+  
+ 
+    end
+   
+    
+        S = ['Konsumer ke ',num2str(cons),' ', ' minta konten ',' ', num2str(konten), ' ', '   r1= ', num2str(Router1), '    r2= ', num2str(Router2),   '    r3= ', num2str(Router3), '    r4= ', num2str(Router4), '    r5= ', num2str(Router5), ' LRU= ' ,  num2str(CS_LRU)];
+    disp(S);
+    CS_LRU = CS_LRU + 1;
+    
+end
+    
+
+fprintf('Cache hits = %d\n', cache_hit ); 
+
+disp(Router1);
+disp(Router2);
+disp(Router3);
+disp(Router4);
+disp(Router5);
+
+
